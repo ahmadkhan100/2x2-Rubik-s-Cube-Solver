@@ -1,4 +1,4 @@
-# 2x2-Rubik-s-Cube-Solver
+# 2x2-Rubiks-Cube-Solver
 
 Program that outputs a solution to a 2x2 Cube given an input configuration
 
