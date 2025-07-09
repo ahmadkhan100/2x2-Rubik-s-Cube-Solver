@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2x2 Rubik's Cube Solver</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .cube-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        
+        .cube-face {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 2px;
+            margin: 5px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            padding: 5px;
+        }
+        
+        .cube-square {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #333;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .cube-square:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .color-white { background-color: #ffffff; }
+        .color-red { background-color: #ff4444; }
+        .color-blue { background-color: #4444ff; }
+        .color-orange { background-color: #ff8800; }
+        .color-green { background-color: #44ff44; }
+        .color-yellow { background-color: #ffff44; }
+        
+        .cube-layout {
+            display: grid;
+            grid-template-areas: 
+                ". up ."
+                "left front right"
+                ". down .";
+            gap: 10px;
+            justify-items: center;
+        }
+        
+        .face-up { grid-area: up; }
+        .face-left { grid-area: left; }
+        .face-front { grid-area: front; }
+        .face-right { grid-area: right; }
+        .face-down { grid-area: down; }
+        
+        .face-label {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .color-palette {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .color-option {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #333;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .color-option.selected {
+            border-color: #007bff;
+            border-width: 4px;
+            transform: scale(1.05);
+        }
+        
+        .color-option::after {
+            content: attr(data-color);
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .solution-area {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            min-height: 100px;
+        }
+        
+        .solution-steps {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            line-height: 1.6;
+            text-align: center;
+        }
+        
+        .scramble-area {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .scramble-sequence {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .instructions {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #0c5460;
+        }
+        
+        .notation-guide {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .notation-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        
+        @media (max-width: 768px) {
+            .cube-layout {
+                transform: scale(0.8);
+            }
+            
+            .color-palette {
+                justify-content: center;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧩 2x2 Rubik's Cube Solver</h1>
+        
+        <div class="instructions">
+            <h3>How to Use:</h3>
+            <ol>
+                <li>Select a color from the palette below</li>
+                <li>Click on the cube squares to set their colors</li>
+                <li>Make sure each color appears exactly 4 times</li>
+                <li>Click "Solve Cube" to get the solution</li>
+            </ol>
+        </div>
+        
+        <div class="color-palette">
+            <div class="color-option color-white selected" data-color="white" onclick="selectColor('white')"></div>
+            <div class="color-option color-red" data-color="red" onclick="selectColor('red')"></div>
+            <div class="color-option color-blue" data-color="blue" onclick="selectColor('blue')"></div>
+            <div class="color-option color-orange" data-color="orange" onclick="selectColor('orange')"></div>
+            <div class="color-option color-green" data-color="green" onclick="selectColor('green')"></div>
+            <div class="color-option color-yellow" data-color="yellow" onclick="selectColor('yellow')"></div>
+        </div>
+        
+        <div class="cube-container">
+            <div class="cube-layout">
+                <div class="face-up">
+                    <div class="face-label">UP</div>
+                    <div class="cube-face" id="face-up">
+                        <div class="cube-square color-white" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-white" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-white" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-white" onclick="setSquareColor(this)"></div>
+                    </div>
+                </div>
+                
+                <div class="face-left">
+                    <div class="face-label">LEFT</div>
+                    <div class="cube-face" id="face-left">
+                        <div class="cube-square color-orange" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-orange" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-orange" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-orange" onclick="setSquareColor(this)"></div>
+                    </div>
+                </div>
+                
+                <div class="face-front">
+                    <div class="face-label">FRONT</div>
+                    <div class="cube-face" id="face-front">
+                        <div class="cube-square color-green" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-green" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-green" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-green" onclick="setSquareColor(this)"></div>
+                    </div>
+                </div>
+                
+                <div class="face-right">
+                    <div class="face-label">RIGHT</div>
+                    <div class="cube-face" id="face-right">
+                        <div class="cube-square color-red" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-red" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-red" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-red" onclick="setSquareColor(this)"></div>
+                    </div>
+                </div>
+                
+                <div class="face-down">
+                    <div class="face-label">DOWN</div>
+                    <div class="cube-face" id="face-down">
+                        <div class="cube-square color-yellow" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-yellow" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-yellow" onclick="setSquareColor(this)"></div>
+                        <div class="cube-square color-yellow" onclick="setSquareColor(this)"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" onclick="generateScramble()">Generate Scramble</button>
+            <button class="btn btn-secondary" onclick="resetCube()">Reset Cube</button>
+            <button class="btn btn-success" onclick="solveCube()">Solve Cube</button>
+            <button class="btn btn-secondary" onclick="validateCube()">Validate</button>
+        </div>
+        
+        <div class="scramble-area" id="scramble-area" style="display: none;">
+            <h3>Scramble Sequence:</h3>
+            <div class="scramble-sequence" id="scramble-sequence"></div>
+        </div>
+        
+        <div class="solution-area">
+            <h3>Solution:</h3>
+            <div class="solution-steps" id="solution-steps">
+                Click "Solve Cube" to get the solution steps...
+            </div>
+        </div>
+        
+        <div class="notation-guide">
+            <div class="notation-item">
+                <strong>U, R, L, F, B, D</strong><br>
+                Up, Right, Left, Front, Back, Down faces
+            </div>
+            <div class="notation-item">
+                <strong>' (prime)</strong><br>
+                Counter-clockwise turn (e.g., R')
+            </div>
+            <div class="notation-item">
+                <strong>2</strong><br>
+                Double turn (e.g., U2)
+            </div>
+            <div class="notation-item">
+                <strong>Colors</strong><br>
+                W=White, R=Red, B=Blue, O=Orange, G=Green, Y=Yellow
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedColor = 'white';
+        
+        const colorMap = {
+            'white': 'w',
+            'red': 'r', 
+            'blue': 'b',
+            'orange': 'o',
+            'green': 'g',
+            'yellow': 'y'
+        };
+        
+        const moves = ['U', "U'", 'U2', 'R', "R'", 'R2', 'L', "L'", 'L2', 
+                      'F', "F'", 'F2', 'B', "B'", 'B2', 'D', "D'", 'D2'];
+        
+        function selectColor(color) {
+            selectedColor = color;
+            
+            // Update visual selection
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelector(`[data-color="${color}"]`).classList.add('selected');
+        }
+        
+        function setSquareColor(square) {
+            // Remove all color classes
+            square.className = 'cube-square';
+            // Add the selected color class
+            square.classList.add(`color-${selectedColor}`);
+        }
+        
+        function resetCube() {
+            // Reset to solved state
+            const faces = ['up', 'left', 'front', 'right', 'down'];
+            const solvedColors = ['white', 'orange', 'green', 'red', 'yellow'];
+            
+            faces.forEach((face, index) => {
+                const squares = document.querySelectorAll(`#face-${face} .cube-square`);
+                squares.forEach(square => {
+                    square.className = 'cube-square';
+                    square.classList.add(`color-${solvedColors[index]}`);
+                });
+            });
+            
+            // Reset back face to blue
+            const backSquares = document.querySelectorAll('#face-back .cube-square');
+            if (backSquares.length === 0) {
+                // Back face is not visible in this layout, but we track it conceptually
+                console.log('Back face reset to blue');
+            }
+            
+            document.getElementById('solution-steps').textContent = 'Click "Solve Cube" to get the solution steps...';
+            document.getElementById('scramble-area').style.display = 'none';
+        }
+        
+        function generateScramble() {
+            const scrambleLength = 15 + Math.floor(Math.random() * 10); // 15-25 moves
+            const scramble = [];
+            let lastMove = '';
+            
+            for (let i = 0; i < scrambleLength; i++) {
+                let move;
+                do {
+                    move = moves[Math.floor(Math.random() * moves.length)];
+                } while (move.charAt(0) === lastMove.charAt(0) && i > 0);
+                
+                scramble.push(move);
+                lastMove = move;
+            }
+            
+            document.getElementById('scramble-sequence').textContent = scramble.join(' ');
+            document.getElementById('scramble-area').style.display = 'block';
+            
+            // Apply scramble visually (simplified - just randomize colors)
+            applyScrambleVisually();
+        }
+        
+        function applyScrambleVisually() {
+            const colors = ['white', 'red', 'blue', 'orange', 'green', 'yellow'];
+            const colorCounts = {
+                'white': 0, 'red': 0, 'blue': 0, 
+                'orange': 0, 'green': 0, 'yellow': 0
+            };
+            
+            // Get all squares
+            const allSquares = document.querySelectorAll('.cube-square');
+            const totalSquares = allSquares.length;
+            
+            // Ensure each color appears exactly 4 times
+            const targetCount = Math.floor(totalSquares / colors.length);
+            let colorArray = [];
+            
+            colors.forEach(color => {
+                for (let i = 0; i < targetCount; i++) {
+                    colorArray.push(color);
+                }
+            });
+            
+            // Shuffle the color array
+            for (let i = colorArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [colorArray[i], colorArray[j]] = [colorArray[j], colorArray[i]];
+            }
+            
+            // Apply colors to squares
+            allSquares.forEach((square, index) => {
+                if (index < colorArray.length) {
+                    square.className = 'cube-square';
+                    square.classList.add(`color-${colorArray[index]}`);
+                }
+            });
+        }
+        
+        function validateCube() {
+            const colorCounts = {
+                'white': 0, 'red': 0, 'blue': 0, 
+                'orange': 0, 'green': 0, 'yellow': 0
+            };
+            
+            // Count colors on visible faces
+            document.querySelectorAll('.cube-square').forEach(square => {
+                const colorClass = Array.from(square.classList).find(cls => cls.startsWith('color-'));
+                if (colorClass) {
+                    const color = colorClass.replace('color-', '');
+                    colorCounts[color]++;
+                }
+            });
+            
+            // Check if each color appears exactly 4 times
+            const isValid = Object.values(colorCounts).every(count => count === 4);
+            
+            let message = isValid ? 
+                '✅ Cube configuration is valid!' : 
+                '❌ Invalid cube configuration. Each color must appear exactly 4 times.';
+            
+            message += '\n\nColor counts:\n';
+            Object.entries(colorCounts).forEach(([color, count]) => {
+                message += `${color}: ${count}\n`;
+            });
+            
+            alert(message);
+        }
+        
+        function getCubeState() {
+            const faces = ['up', 'right', 'left', 'front', 'down']; // Note: back face not visible
+            const cubeState = {};
+            
+            faces.forEach(face => {
+                const squares = document.querySelectorAll(`#face-${face} .cube-square`);
+                cubeState[face] = Array.from(squares).map(square => {
+                    const colorClass = Array.from(square.classList).find(cls => cls.startsWith('color-'));
+                    return colorClass ? colorMap[colorClass.replace('color-', '')] : 'w';
+                });
+            });
+            
+            // Add back face (assume blue for now since it's not visible)
+            cubeState.back = ['b', 'b', 'b', 'b'];
+            
+            return cubeState;
+        }
+        
+        function solveCube() {
+            const cubeState = getCubeState();
+            
+            // This is a mock solution since we can't actually call the C++ solver from the browser
+            const mockSolutions = [
+                "R U R' U' R U R'",
+                "U R U' R' U' F' U F",
+                "R U R' F' R F R'",
+                "U' R U R' U R U' R'",
+                "F R U' R' U' R U R' F'",
+                "R U R' U R U2 R'",
+                "U R U' R' F' U' F",
+                "R U2 R' U' R U' R'"
+            ];
+            
+            // Simulate solving delay
+            document.getElementById('solution-steps').textContent = 'Calculating solution...';
+            
+            setTimeout(() => {
+                const randomSolution = mockSolutions[Math.floor(Math.random() * mockSolutions.length)];
+                document.getElementById('solution-steps').innerHTML = `
+                    <strong>Solution Steps:</strong><br>
+                    ${randomSolution}<br><br>
+                    <em>Note: This is a demo solution. To get actual solutions, 
+                    use the C++ solver with your cube configuration.</em><br><br>
+                    <strong>Cube State (for C++ solver):</strong><br>
+                    ${JSON.stringify(cubeState, null, 2)}
+                `;
+            }, 1500);
+        }
+        
+        // Initialize with solved cube
+        resetCube();
+    </script>
+</body>
+</html>
+
