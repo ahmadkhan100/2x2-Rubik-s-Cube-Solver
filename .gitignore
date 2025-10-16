@@ -1,0 +1,36 @@
+# Compiled object files and binaries
+*.o
+*.obj
+*.so
+*.dll
+*.dylib
+*.exe
+*.out
+
+# Build directories
+build/
+dist/
+
+# Logs and caches
+*.log
+*.cache
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.python-version
+venv/
+.venv/
+ENV/
+env/
+
+# macOS Finder files
+.DS_Store
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*.orig
