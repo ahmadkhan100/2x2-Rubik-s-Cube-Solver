@@ -17,7 +17,7 @@ public:
 	void setleft(int c);
 	void setright(int c);
 
-	Row flip();
+	Row flip() const;
 
 	bool same(); // whether both cubies are the same color, sets color
 	int color; // -1 if !same, color id if same

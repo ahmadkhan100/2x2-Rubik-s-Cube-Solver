@@ -1,7 +1,7 @@
 #ifndef Cube_h
 #define Cube_h
-#include "Side.h"
-#include "Row.h"
+#include "side.h"
+#include "row.h"
 
 using namespace std;
 
