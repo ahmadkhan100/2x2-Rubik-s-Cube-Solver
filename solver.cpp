@@ -6,7 +6,7 @@
 #include <time.h>
 #include <stdio.h>
 
-#include "Cube.h"
+#include "cube.h"
 
 using namespace std;
 

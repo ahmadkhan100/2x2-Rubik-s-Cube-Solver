@@ -4,7 +4,7 @@
 #include <random>
 #include <ctime>
 #include <algorithm>
-#include "Cube.h"
+#include "cube.h"
 
 using namespace std;
 

@@ -1,4 +1,4 @@
-#include "Row.h"
+#include "row.h"
 
 Row::Row(){
 	color = -1;
@@ -34,11 +34,8 @@ void Row::setright(int c) {
 	right = c;
 }
 
-Row Row::flip() {
-	int temp = left;
-	left = right;
-	right = temp;
-	return Row(left,right);
+Row Row::flip() const {
+	return Row(right, left);
 }
 
 bool Row::same() {

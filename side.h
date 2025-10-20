@@ -1,6 +1,6 @@
 #ifndef Side_h
 #define Side_h
-#include "Row.h"
+#include "row.h"
 
 using namespace std;
 
